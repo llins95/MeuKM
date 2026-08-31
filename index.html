@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#087f8c" />
+    <meta name="description" content="Controle de combustível, manutenção e despesas do veículo." />
+    <title>MeuKM</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand-row">
+          <div class="brand-identity">
+            <img class="brand-icon" src="icon-192.png" alt="" width="52" height="52" />
+            <div>
+            <p class="eyebrow">CONTROLE DO VEÍCULO</p>
+              <h1>MeuKM</h1>
+            </div>
+          </div>
+          <button id="installButton" class="button button-secondary install-button" hidden>Instalar</button>
+        </div>
+
+        <label class="vehicle-picker" for="vehicleSelect">
+          <span>Veículo atual</span>
+          <select id="vehicleSelect" aria-label="Selecionar veículo"></select>
+        </label>
+      </header>
+
+      <main id="mainContent" tabindex="-1">
+        <section id="view-home" class="view is-active" aria-labelledby="homeTitle">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow" id="monthLabel"></p>
+              <h2 id="homeTitle">Visão geral</h2>
+            </div>
+            <button class="button button-primary" data-open-add>Adicionar</button>
+          </div>
+
+          <article class="balance-card">
+            <p>Gasto no mês</p>
+            <strong id="monthTotal">R$ 0,00</strong>
+            <span id="monthComparison">Comece registrando um abastecimento</span>
+          </article>
+
+          <div class="metric-grid" aria-label="Indicadores principais">
+            <article class="metric-card">
+              <span>Consumo médio</span>
+              <strong id="avgConsumption">—</strong>
+              <small>km por litro</small>
+            </article>
+            <article class="metric-card">
+              <span>Custo por km</span>
+              <strong id="costPerKm">—</strong>
+              <small>todos os gastos</small>
+            </article>
+            <article class="metric-card">
+              <span>Preço médio</span>
+              <strong id="avgFuelPrice">—</strong>
+              <small>por litro</small>
+            </article>
+            <article class="metric-card">
+              <span>Odômetro</span>
+              <strong id="currentOdometer">0 km</strong>
+              <small>última leitura</small>
+            </article>
+          </div>
+
+          <section class="content-section" aria-labelledby="quickTitle">
+            <div class="section-heading">
+              <h3 id="quickTitle">Cadastro rápido</h3>
+            </div>
+            <div class="quick-actions">
+              <button data-add-type="fuel">Abastecimento</button>
+              <button data-add-type="maintenance">Manutenção</button>
+              <button data-add-type="expense">Outra despesa</button>
+            </div>
+          </section>
+
+          <section class="content-section" aria-labelledby="reminderTitle">
+            <div class="section-heading">
+              <h3 id="reminderTitle">Próxima manutenção</h3>
+              <button class="text-button" data-view-target="more">Ver lembretes</button>
+            </div>
+            <div id="nextMaintenance" class="reminder-card"></div>
+          </section>
+
+          <section class="content-section" aria-labelledby="recentTitle">
+            <div class="section-heading">
+              <h3 id="recentTitle">Atividade recente</h3>
+              <button class="text-button" data-view-target="history">Ver histórico</button>
+            </div>
+            <div id="recentList" class="record-list compact-list"></div>
+          </section>
+        </section>
+
+        <section id="view-history" class="view" aria-labelledby="historyTitle" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">TODOS OS REGISTROS</p>
+              <h2 id="historyTitle">Histórico</h2>
+            </div>
+            <button class="button button-primary" data-open-add>Adicionar</button>
+          </div>
+
+          <div class="filter-bar" role="group" aria-label="Filtrar histórico">
+            <button class="filter-chip is-active" data-filter="all">Todos</button>
+            <button class="filter-chip" data-filter="fuel">Combustível</button>
+            <button class="filter-chip" data-filter="maintenance">Manutenção</button>
+            <button class="filter-chip" data-filter="expense">Despesas</button>
+          </div>
+          <div id="historyList" class="record-list"></div>
+        </section>
+
+        <section id="view-reports" class="view" aria-labelledby="reportsTitle" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">ANÁLISE FINANCEIRA</p>
+              <h2 id="reportsTitle">Relatórios</h2>
+            </div>
+          </div>
+
+          <label class="period-picker" for="reportPeriod">
+            <span>Período</span>
+            <select id="reportPeriod">
+              <option value="6">Últimos 6 meses</option>
+              <option value="12">Últimos 12 meses</option>
+              <option value="all">Todo o período</option>
+            </select>
+          </label>
+
+          <div class="report-summary" aria-label="Resumo do período">
+            <article><span>Total gasto</span><strong id="reportTotal">R$ 0,00</strong></article>
+            <article><span>Distância</span><strong id="reportDistance">0 km</strong></article>
+            <article><span>Custo por km</span><strong id="reportCostKm">R$ 0,00</strong></article>
+          </div>
+
+          <section class="chart-card" aria-labelledby="monthlyChartTitle">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">EVOLUÇÃO</p>
+                <h3 id="monthlyChartTitle">Gastos mensais</h3>
+              </div>
+            </div>
+            <div id="monthlyChart" class="bar-chart" role="img" aria-label="Gráfico de gastos mensais"></div>
+          </section>
+
+          <section class="chart-card" aria-labelledby="categoryChartTitle">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">DISTRIBUIÇÃO</p>
+                <h3 id="categoryChartTitle">Gastos por categoria</h3>
+              </div>
+            </div>
+            <div id="categoryChart" class="category-chart"></div>
+          </section>
+        </section>
+
+        <section id="view-more" class="view" aria-labelledby="moreTitle" hidden>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">ORGANIZAÇÃO</p>
+              <h2 id="moreTitle">Mais opções</h2>
+            </div>
+          </div>
+
+          <section class="settings-group" aria-labelledby="vehicleSettingsTitle">
+            <h3 id="vehicleSettingsTitle">Veículos</h3>
+            <div id="vehicleList" class="settings-list"></div>
+            <button id="addVehicleButton" class="settings-action">Cadastrar outro veículo</button>
+          </section>
+
+          <section class="settings-group" aria-labelledby="remindersSettingsTitle">
+            <h3 id="remindersSettingsTitle">Lembretes</h3>
+            <label class="toggle-row">
+              <span><strong>Manutenções</strong><small>Avisar por data e quilometragem</small></span>
+              <input id="maintenanceNotifications" type="checkbox" checked />
+            </label>
+            <label class="toggle-row">
+              <span><strong>Abastecimentos</strong><small>Lembrar após 500 km</small></span>
+              <input id="fuelNotifications" type="checkbox" checked />
+            </label>
+          </section>
+
+          <section class="settings-group" aria-labelledby="appearanceTitle">
+            <h3 id="appearanceTitle">Aparência</h3>
+            <label class="toggle-row">
+              <span><strong>Tema escuro</strong><small>Usar cores mais confortáveis à noite</small></span>
+              <input id="darkModeToggle" type="checkbox" />
+            </label>
+          </section>
+
+          <section class="settings-group" aria-labelledby="backupTitle">
+            <h3 id="backupTitle">Backup dos dados</h3>
+            <div class="backup-actions">
+              <button id="exportButton" class="settings-action">Exportar backup</button>
+              <label class="settings-action file-action" for="importInput">Importar backup</label>
+              <input id="importInput" type="file" accept="application/json" hidden />
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Navegação principal">
+        <button class="nav-item is-active" data-view="home">Início</button>
+        <button class="nav-item" data-view="history">Histórico</button>
+        <button class="nav-item" data-view="reports">Relatórios</button>
+        <button class="nav-item" data-view="more">Mais</button>
+      </nav>
+    </div>
+
+    <dialog id="addMenuDialog" class="app-dialog small-dialog">
+      <div class="dialog-header">
+        <div><p class="eyebrow">NOVO REGISTRO</p><h2>O que deseja adicionar?</h2></div>
+        <button class="close-button" data-close-dialog="addMenuDialog" aria-label="Fechar">Fechar</button>
+      </div>
+      <div class="dialog-choice-list">
+        <button data-add-type="fuel"><strong>Abastecimento</strong><span>Valor, litros e consumo</span></button>
+        <button data-add-type="maintenance"><strong>Manutenção</strong><span>Serviço, oficina e próximo prazo</span></button>
+        <button data-add-type="expense"><strong>Outra despesa</strong><span>IPVA, seguro, pedágio e outras</span></button>
+      </div>
+    </dialog>
+
+    <dialog id="recordDialog" class="app-dialog form-dialog">
+      <form id="recordForm" method="dialog">
+        <div class="dialog-header sticky-dialog-header">
+          <div><p class="eyebrow" id="recordEyebrow">NOVO REGISTRO</p><h2 id="recordDialogTitle">Adicionar</h2></div>
+          <button type="button" class="close-button" data-close-dialog="recordDialog">Cancelar</button>
+        </div>
+
+        <input type="hidden" id="recordId" />
+        <input type="hidden" id="recordType" />
+
+        <div class="form-grid two-columns">
+          <label><span>Data</span><input id="recordDate" type="date" required /></label>
+          <label><span>Odômetro (km)</span><input id="recordOdometer" type="number" min="0" step="1" required /></label>
+        </div>
+
+        <div id="fuelFields" class="conditional-fields">
+          <label><span>Combustível</span><select id="fuelType"><option>Gasolina comum</option><option>Gasolina aditivada</option><option>Etanol</option><option>Diesel</option><option>GNV</option></select></label>
+          <div class="form-grid three-columns">
+            <label><span>Preço por litro</span><input id="fuelPrice" type="number" min="0" step="0.001" inputmode="decimal" /></label>
+            <label><span>Litros</span><input id="fuelLiters" type="number" min="0" step="0.001" inputmode="decimal" /></label>
+            <label><span>Valor total</span><input id="fuelTotal" type="number" min="0" step="0.01" inputmode="decimal" /></label>
+          </div>
+          <label class="toggle-row form-toggle"><span><strong>Tanque completo</strong><small>Necessário para calcular o consumo real</small></span><input id="fullTank" type="checkbox" checked /></label>
+        </div>
+
+        <div id="maintenanceFields" class="conditional-fields">
+          <label><span>Tipo de manutenção</span><select id="maintenanceCategory"><option>Troca de óleo</option><option>Revisão</option><option>Pneus - calibragem</option><option>Pneus - alinhamento e balanceamento</option><option>Freios</option><option>Suspensão e amortecedores</option><option>Lavagem</option><option>Outro serviço</option></select></label>
+          <label><span>Valor total</span><input id="maintenanceTotal" type="number" min="0" step="0.01" inputmode="decimal" /></label>
+          <div class="form-grid two-columns">
+            <label><span>Próxima em (km)</span><input id="nextOdometer" type="number" min="0" step="1" /></label>
+            <label><span>Próxima na data</span><input id="nextDate" type="date" /></label>
+          </div>
+        </div>
+
+        <div id="expenseFields" class="conditional-fields">
+          <label><span>Tipo de despesa</span><select id="expenseCategory"><option>Seguro</option><option>IPVA e impostos</option><option>Licenciamento</option><option>Financiamento</option><option>Estacionamento</option><option>Pedágio</option><option>Multa</option><option>Limpeza</option><option>Outra despesa</option></select></label>
+          <label><span>Valor total</span><input id="expenseTotal" type="number" min="0" step="0.01" inputmode="decimal" /></label>
+          <label><span>Forma de pagamento</span><select id="paymentMethod"><option>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Boleto</option><option>Outro</option></select></label>
+        </div>
+
+        <label><span>Local ou estabelecimento</span><input id="recordPlace" type="text" maxlength="80" placeholder="Opcional" /></label>
+        <label><span>Observações</span><textarea id="recordNotes" rows="3" maxlength="240" placeholder="Opcional"></textarea></label>
+
+        <div class="dialog-actions">
+          <button id="deleteRecordButton" type="button" class="button button-danger" hidden>Excluir</button>
+          <button type="submit" class="button button-primary">Salvar registro</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="vehicleDialog" class="app-dialog small-dialog">
+      <form id="vehicleForm" method="dialog">
+        <div class="dialog-header">
+          <div><p class="eyebrow">GARAGEM</p><h2>Cadastrar veículo</h2></div>
+          <button type="button" class="close-button" data-close-dialog="vehicleDialog">Cancelar</button>
+        </div>
+        <label><span>Nome do veículo</span><input id="vehicleName" type="text" maxlength="60" placeholder="Ex.: Honda CG 160" required /></label>
+        <div class="form-grid two-columns">
+          <label><span>Placa</span><input id="vehiclePlate" type="text" maxlength="8" placeholder="Opcional" /></label>
+          <label><span>Odômetro atual</span><input id="vehicleOdometer" type="number" min="0" step="1" required /></label>
+        </div>
+        <div class="dialog-actions"><button type="submit" class="button button-primary">Cadastrar veículo</button></div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
