@@ -120,6 +120,8 @@ main { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
 .button-primary:hover { background: var(--primary-strong); }
 .button-secondary { background: #fff; color: var(--primary-strong); }
 .button-danger { background: #fee9e7; color: var(--danger); }
+.button-danger-solid { background: var(--danger); color: #fff; }
+.button-danger-solid:disabled { opacity: .46; cursor: not-allowed; }
 .install-button { min-height: 38px; padding: 8px 12px; }
 
 .balance-card {
@@ -239,6 +241,22 @@ main { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
 .toggle-row span small { color: var(--text-muted); margin-top: 4px; line-height: 1.35; }
 .toggle-row input[type="checkbox"] { width: 25px; height: 25px; accent-color: var(--primary); flex: 0 0 auto; }
 .backup-actions { display: grid; gap: 2px; }
+.settings-description, .dialog-description { color: var(--text-muted); line-height: 1.5; }
+.settings-description { margin-bottom: 12px; font-size: 14px; }
+.dialog-description { margin: -6px 0 18px; font-size: 14px; }
+.account-summary {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-muted);
+}
+.account-summary span { color: var(--text-muted); font-size: 13px; line-height: 1.4; }
+.danger-zone { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+.danger-zone h3 { color: var(--danger); }
+.settings-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+.settings-danger:hover { color: var(--danger); border-color: var(--danger); background: #fee9e7; }
 
 .bottom-nav {
   position: fixed;
@@ -277,6 +295,30 @@ main { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
 .dialog-choice-list { display: grid; gap: 10px; }
 .dialog-choice-list button strong, .dialog-choice-list button span { display: block; }
 .dialog-choice-list button span { color: var(--text-muted); margin-top: 5px; font-weight: 400; }
+
+.auth-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface-muted);
+}
+.auth-mode-switch button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 800;
+}
+.auth-mode-switch button.is-active { background: var(--surface); color: var(--primary-strong); box-shadow: 0 2px 8px rgba(18,46,52,.1); }
+.auth-form { display: grid; }
+.auth-form .button { width: 100%; }
+.form-help { display: block; margin: -8px 0 16px; color: var(--text-muted); }
+.form-message { min-height: 20px; margin: 14px 0 0; color: var(--danger); font-size: 13px; font-weight: 700; }
+.danger-dialog .eyebrow, .danger-dialog h2 { color: var(--danger); }
 
 form > label, .conditional-fields > label, .form-grid > label { display: grid; gap: 7px; margin-bottom: 16px; }
 form label > span { font-weight: 800; font-size: 13px; }
@@ -329,6 +371,8 @@ body.dark {
   background: #071216;
 }
 body.dark html { background: #071216; }
+body.dark .button-secondary { background: var(--surface-raised); color: var(--text); }
+body.dark .settings-danger:hover { background: rgba(179,38,30,.16); }
 
 @media (max-width: 390px) {
   .three-columns { grid-template-columns: 1fr 1fr; }

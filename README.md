@@ -11,8 +11,12 @@ Aplicativo PWA para controle de combustível, manutenção e outras despesas de 
 - histórico com filtros, edição e exclusão;
 - relatórios de gastos, consumo e custo por quilômetro;
 - tema claro e escuro;
+- cadastro e login local com senha protegida por hash;
 - backup por arquivo JSON;
+- exclusão completa de dados com confirmação digitada;
 - armazenamento local e funcionamento offline.
+
+> A conta desta versão é local ao aparelho. Ela não sincroniza dados entre dispositivos e não é incluída no arquivo de backup.
 
 ## Abrir localmente
 

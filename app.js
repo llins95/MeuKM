@@ -1,5 +1,7 @@
 const STORAGE_KEY = "meukm-data-v1";
 const LEGACY_STORAGE_KEY = "autocusto-data-v2";
+const AUTH_KEY = "meukm-account-v1";
+const SESSION_KEY = "meukm-session-v1";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -21,7 +23,17 @@ const defaultState = {
   settings: { darkMode: false, maintenanceNotifications: true, fuelNotifications: true }
 };
 
+function createEmptyState() {
+  return {
+    currentVehicleId: "vehicle-empty",
+    vehicles: [{ id: "vehicle-empty", name: "Meu veículo", plate: "SEM PLACA", odometer: 0 }],
+    records: [],
+    settings: structuredClone(defaultState.settings)
+  };
+}
+
 let state = loadState();
+let account = loadAccount();
 let activeFilter = "all";
 let deferredInstallPrompt = null;
 
@@ -35,6 +47,43 @@ function loadState() {
   } catch {
     return structuredClone(defaultState);
   }
+}
+
+function loadAccount() {
+  try {
+    const saved = localStorage.getItem(AUTH_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+}
+
+function isSignedIn() {
+  return Boolean(account?.email && sessionStorage.getItem(SESSION_KEY) === account.email);
+}
+
+function bytesToBase64(bytes) {
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function base64ToBytes(value) {
+  return Uint8Array.from(atob(value), character => character.charCodeAt(0));
+}
+
+async function hashPassword(password, salt) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: base64ToBytes(salt), iterations: 120000 },
+    key,
+    256
+  );
+  return bytesToBase64(new Uint8Array(bits));
 }
 
 function saveState(message) {
@@ -238,6 +287,156 @@ function renderSettings() {
   $("#darkModeToggle").checked = Boolean(state.settings.darkMode);
   $("#maintenanceNotifications").checked = state.settings.maintenanceNotifications !== false;
   $("#fuelNotifications").checked = state.settings.fuelNotifications !== false;
+  renderAccount();
+}
+
+function renderAccount() {
+  const summary = $("#accountSummary");
+  const accountButton = $("#accountButton");
+  const logoutButton = $("#logoutButton");
+
+  if (!account) {
+    summary.innerHTML = "<strong>Nenhuma conta cadastrada</strong><span>Crie uma conta local com e-mail e senha.</span>";
+    accountButton.textContent = "Cadastrar ou entrar";
+    accountButton.hidden = false;
+    logoutButton.hidden = true;
+    return;
+  }
+
+  if (isSignedIn()) {
+    summary.innerHTML = `<strong>${escapeHtml(account.name)}</strong><span>${escapeHtml(account.email)} • conectado neste aparelho</span>`;
+    accountButton.hidden = true;
+    logoutButton.hidden = false;
+    return;
+  }
+
+  summary.innerHTML = `<strong>Conta cadastrada</strong><span>${escapeHtml(account.email)} • sessão encerrada</span>`;
+  accountButton.textContent = "Entrar";
+  accountButton.hidden = false;
+  logoutButton.hidden = true;
+}
+
+function setAuthMode(mode) {
+  const isLogin = mode === "login";
+  $("#loginForm").hidden = !isLogin;
+  $("#registerForm").hidden = isLogin;
+  $$('[data-auth-mode]').forEach(button => {
+    const selected = button.dataset.authMode === mode;
+    button.classList.toggle("is-active", selected);
+    button.setAttribute("aria-selected", String(selected));
+  });
+  $("#authMessage").textContent = "";
+}
+
+function openAccountDialog() {
+  $("#loginForm").reset();
+  $("#registerForm").reset();
+  if (account?.email) $("#loginEmail").value = account.email;
+  setAuthMode(account ? "login" : "register");
+  $("#accountDialog").showModal();
+}
+
+async function registerAccount(event) {
+  event.preventDefault();
+  const message = $("#authMessage");
+  const name = $("#registerName").value.trim();
+  const email = $("#registerEmail").value.trim().toLowerCase();
+  const password = $("#registerPassword").value;
+  const confirmation = $("#registerPasswordConfirm").value;
+
+  if (account) {
+    message.textContent = "Já existe uma conta neste aparelho. Entre com a senha cadastrada.";
+    return;
+  }
+  if (name.length < 2) {
+    message.textContent = "Informe seu nome.";
+    return;
+  }
+  if (password.length < 6) {
+    message.textContent = "A senha precisa ter pelo menos 6 caracteres.";
+    return;
+  }
+  if (password !== confirmation) {
+    message.textContent = "As senhas não são iguais.";
+    return;
+  }
+  if (!crypto?.subtle) {
+    message.textContent = "Não foi possível proteger a senha neste navegador.";
+    return;
+  }
+
+  try {
+    const salt = bytesToBase64(crypto.getRandomValues(new Uint8Array(16)));
+    account = {
+      name,
+      email,
+      salt,
+      passwordHash: await hashPassword(password, salt),
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem(AUTH_KEY, JSON.stringify(account));
+    sessionStorage.setItem(SESSION_KEY, email);
+    $("#accountDialog").close();
+    renderAccount();
+    showToast("Conta cadastrada e login realizado.");
+  } catch {
+    message.textContent = "Não foi possível criar a conta. Tente novamente.";
+  }
+}
+
+async function loginAccount(event) {
+  event.preventDefault();
+  const message = $("#authMessage");
+  const email = $("#loginEmail").value.trim().toLowerCase();
+  const password = $("#loginPassword").value;
+
+  if (!account) {
+    message.textContent = "Nenhuma conta foi cadastrada neste aparelho.";
+    setAuthMode("register");
+    return;
+  }
+  try {
+    const passwordHash = await hashPassword(password, account.salt);
+    if (email !== account.email || passwordHash !== account.passwordHash) {
+      message.textContent = "E-mail ou senha incorretos.";
+      return;
+    }
+    sessionStorage.setItem(SESSION_KEY, account.email);
+    $("#accountDialog").close();
+    renderAccount();
+    showToast("Login realizado.");
+  } catch {
+    message.textContent = "Não foi possível entrar. Tente novamente.";
+  }
+}
+
+function logoutAccount() {
+  sessionStorage.removeItem(SESSION_KEY);
+  renderAccount();
+  showToast("Você saiu da conta.");
+}
+
+function openDeleteDataDialog() {
+  $("#deleteDataForm").reset();
+  $("#confirmDeleteDataButton").disabled = true;
+  $("#deleteDataDialog").showModal();
+}
+
+function deleteAllData(event) {
+  event.preventDefault();
+  if ($("#deleteDataConfirmation").value.trim().toUpperCase() !== "APAGAR") return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
+  localStorage.removeItem(AUTH_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  state = createEmptyState();
+  account = null;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  $("#deleteDataDialog").close();
+  render();
+  switchView("home");
+  showToast("Todos os dados foram apagados.");
 }
 
 function switchView(viewName) {
@@ -445,6 +644,8 @@ function bindEvents() {
       $$(".filter-chip").forEach(button => button.classList.toggle("is-active", button === filterButton));
       renderHistory();
     }
+    const authModeButton = event.target.closest("[data-auth-mode]");
+    if (authModeButton) setAuthMode(authModeButton.dataset.authMode);
   });
   $("#vehicleSelect").addEventListener("change", event => { state.currentVehicleId = event.target.value; saveState(); render(); });
   $("#recordForm").addEventListener("submit", saveRecord);
@@ -458,6 +659,15 @@ function bindEvents() {
   $("#fuelNotifications").addEventListener("change", event => { state.settings.fuelNotifications = event.target.checked; saveState("Preferência salva."); });
   $("#exportButton").addEventListener("click", exportBackup);
   $("#importInput").addEventListener("change", event => importBackup(event.target.files[0]));
+  $("#accountButton").addEventListener("click", openAccountDialog);
+  $("#logoutButton").addEventListener("click", logoutAccount);
+  $("#loginForm").addEventListener("submit", loginAccount);
+  $("#registerForm").addEventListener("submit", registerAccount);
+  $("#openDeleteDataButton").addEventListener("click", openDeleteDataDialog);
+  $("#deleteDataConfirmation").addEventListener("input", event => {
+    $("#confirmDeleteDataButton").disabled = event.target.value.trim().toUpperCase() !== "APAGAR";
+  });
+  $("#deleteDataForm").addEventListener("submit", deleteAllData);
 
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
