@@ -1,13 +1,13 @@
 {
   "name": "MeuKM — Controle do Veículo",
   "short_name": "MeuKM",
-  "description": "Controle de combustível, manutenção e despesas do veículo.",
+  "description": "Controle e sincronização de combustível, manutenção e despesas do veículo.",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f6f7",
-  "theme_color": "#087f8c",
+  "background_color": "#081f3a",
+  "theme_color": "#0759d6",
   "icons": [
     {
       "src": "icon-192.png",

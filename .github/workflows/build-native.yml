@@ -1,0 +1,79 @@
+name: Build Android e Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/meukm_flutter/**"
+      - ".github/workflows/build-native.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/meukm_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build apk --release
+      - run: cp build/app/outputs/flutter-apk/app-release.apk build/MeuKM-Android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MeuKM-Android
+          path: apps/meukm_flutter/build/MeuKM-Android.apk
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/meukm_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build windows --release
+      - name: Compactar aplicativo
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/MeuKM-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MeuKM-Windows
+          path: apps/meukm_flutter/build/MeuKM-Windows.zip
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publicar beta para download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "beta-${{ github.run_number }}"
+          dist/MeuKM-Android.apk
+          dist/MeuKM-Windows.zip
+          --title "MeuKM Beta ${{ github.run_number }}"
+          --notes "Beta automático do MeuKM para Android e Windows. O Android é distribuído em APK e o Windows em ZIP x64."
+          --prerelease

@@ -11,12 +11,17 @@ Aplicativo PWA para controle de combustível, manutenção e outras despesas de 
 - histórico com filtros, edição e exclusão;
 - relatórios de gastos, consumo e custo por quilômetro;
 - tema claro e escuro;
-- cadastro e login local com senha protegida por hash;
+- cadastro e login online com senha gerenciada pelo Supabase Auth;
+- sincronização automática entre celular e computador, mantendo o uso offline;
+- relatórios com gráficos exportáveis em PNG e PDF;
+- cálculo de consumo real em km/L a partir de tanques completos;
+- previsão do próximo abastecimento com base nos intervalos anteriores;
 - backup por arquivo JSON;
 - exclusão completa de dados com confirmação digitada;
-- armazenamento local e funcionamento offline.
+- armazenamento local e funcionamento offline;
+- base Flutter em desenvolvimento para Android e Windows.
 
-> A conta desta versão é local ao aparelho. Ela não sincroniza dados entre dispositivos e não é incluída no arquivo de backup.
+> A sincronização usa uma conta MeuKM. Cada usuário acessa somente seus próprios dados por meio de políticas de segurança no banco. O arquivo de backup não inclui senha nem sessão de acesso.
 
 ## Abrir localmente
 

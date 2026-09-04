@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
     <link rel="apple-touch-icon" href="icon-192.png" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=0.2.1" />
+    <link rel="stylesheet" href="styles.css?v=0.4.0" />
   </head>
   <body>
     <div class="app-shell">
@@ -89,6 +89,16 @@
             <div id="nextMaintenance" class="reminder-card"></div>
           </section>
 
+          <section class="content-section" aria-labelledby="fuelPredictionTitle">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">PREVISÃO INTELIGENTE</p>
+                <h3 id="fuelPredictionTitle">Próximo abastecimento</h3>
+              </div>
+            </div>
+            <div id="fuelPrediction" class="prediction-card"></div>
+          </section>
+
           <section class="content-section" aria-labelledby="recentTitle">
             <div class="section-heading">
               <h3 id="recentTitle">Atividade recente</h3>
@@ -137,6 +147,12 @@
             <article><span>Total gasto</span><strong id="reportTotal">R$ 0,00</strong></article>
             <article><span>Distância</span><strong id="reportDistance">0 km</strong></article>
             <article><span>Custo por km</span><strong id="reportCostKm">R$ 0,00</strong></article>
+            <article><span>Consumo médio</span><strong id="reportConsumption">—</strong></article>
+          </div>
+
+          <div class="report-export" aria-label="Exportar relatório">
+            <button id="exportReportPng" class="button button-secondary report-export-button">Exportar PNG</button>
+            <button id="exportReportPdf" class="button button-primary report-export-button">Exportar PDF</button>
           </div>
 
           <section class="chart-card" aria-labelledby="monthlyChartTitle">
@@ -198,6 +214,7 @@
             <h3 id="accountTitle">Login</h3>
             <div id="accountSummary" class="account-summary"></div>
             <button id="accountButton" class="settings-action">Cadastrar ou entrar</button>
+            <button id="syncNowButton" class="settings-action" hidden>Sincronizar agora</button>
             <button id="logoutButton" class="settings-action" hidden>Sair da conta</button>
           </section>
 
@@ -212,7 +229,7 @@
 
           <section class="settings-group danger-zone" aria-labelledby="deleteDataTitle">
             <h3 id="deleteDataTitle">Apagar dados</h3>
-            <p class="settings-description">Exclui os dados deste aparelho. Uma confirmação será exigida antes de continuar.</p>
+            <p class="settings-description">Exclui veículos, abastecimentos, manutenções e despesas. Se você estiver conectado, a exclusão também será sincronizada com os outros aparelhos.</p>
             <button id="openDeleteDataButton" class="settings-action settings-danger">Apagar todos os dados</button>
           </section>
         </section>
@@ -305,11 +322,11 @@
 
     <dialog id="accountDialog" class="app-dialog small-dialog">
       <div class="dialog-header">
-        <div><p class="eyebrow">CONTA LOCAL</p><h2>Cadastro e login</h2></div>
+        <div><p class="eyebrow">CONTA MEUKM</p><h2>Cadastro e login</h2></div>
         <button type="button" class="close-button" data-close-dialog="accountDialog" aria-label="Fechar">Fechar</button>
       </div>
 
-      <p class="dialog-description">A conta fica salva somente neste aparelho e ainda não sincroniza os dados com outros dispositivos.</p>
+      <p class="dialog-description">Entre com a mesma conta no celular e no computador. O MeuKM continua funcionando offline e envia as alterações quando a internet voltar.</p>
 
       <div class="auth-mode-switch" role="tablist" aria-label="Escolher cadastro ou login">
         <button type="button" role="tab" data-auth-mode="login" aria-selected="true">Entrar</button>
@@ -340,7 +357,7 @@
           <div><p class="eyebrow">AÇÃO IRREVERSÍVEL</p><h2>Apagar todos os dados?</h2></div>
           <button type="button" class="close-button" data-close-dialog="deleteDataDialog" aria-label="Cancelar">Cancelar</button>
         </div>
-        <p class="dialog-description">Serão excluídos veículos, abastecimentos, manutenções, despesas, preferências e a conta local deste aparelho. Exporte um backup antes se precisar guardar essas informações.</p>
+        <p class="dialog-description">Serão excluídos veículos, abastecimentos, manutenções, despesas e preferências. Se a sincronização estiver ativa, a exclusão valerá para todos os aparelhos; sua conta de acesso será mantida. Exporte um backup antes se precisar guardar essas informações.</p>
         <label>
           <span>Digite APAGAR para confirmar</span>
           <input id="deleteDataConfirmation" type="text" autocomplete="off" autocapitalize="characters" placeholder="APAGAR" required />
@@ -353,6 +370,7 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=0.2.1" defer></script>
+    <script src="jspdf.umd.min.js?v=4.2.1" defer></script>
+    <script src="app.js?v=0.4.0" defer></script>
   </body>
 </html>
