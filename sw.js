@@ -1,5 +1,5 @@
-const CACHE = "meukm-v3";
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const CACHE = "meukm-v4";
+const ASSETS = ["./", "./index.html", "./styles.css?v=0.2.1", "./app.js?v=0.2.1", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
