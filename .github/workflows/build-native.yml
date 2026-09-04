@@ -70,6 +70,7 @@ jobs:
       - name: Publicar beta para download
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: >-
           gh release create "beta-${{ github.run_number }}"
           dist/MeuKM-Android.apk
