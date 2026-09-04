@@ -63,9 +63,9 @@ class ReportExporter {
                 height: 13,
                 decoration: const pw.BoxDecoration(color: PdfColors.grey300),
                 alignment: pw.Alignment.centerLeft,
-                child: pw.FractionallySizedBox(
-                  widthFactor: value <= 0 ? 0.01 : value / maxCategory,
-                  child: pw.Container(color: colors[index]),
+                child: pw.Container(
+                  width: 480 * (value <= 0 ? 0.01 : value / maxCategory),
+                  color: colors[index],
                 ),
               ),
             ]),
