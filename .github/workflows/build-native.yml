@@ -27,11 +27,18 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - run: flutter build apk --release
-      - run: cp build/app/outputs/flutter-apk/app-release.apk build/MeuKM-Android.apk
+      - name: Preparar APK e checksum
+        run: |
+          mkdir -p build/release
+          cp build/app/outputs/flutter-apk/app-release.apk build/release/MeuKM.apk
+          cd build/release
+          sha256sum MeuKM.apk > MeuKM.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: MeuKM-Android
-          path: apps/meukm_flutter/build/MeuKM-Android.apk
+          path: |
+            apps/meukm_flutter/build/release/MeuKM.apk
+            apps/meukm_flutter/build/release/MeuKM.apk.sha256
 
   windows:
     runs-on: windows-latest
@@ -48,13 +55,20 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - run: flutter build windows --release
-      - name: Compactar aplicativo
+      - name: Compactar aplicativo e criar checksum
         shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/MeuKM-Windows.zip
+        run: |
+          $releaseDirectory = "build/windows/x64/runner/Release"
+          $archive = "build/MeuKM-Windows-x64.zip"
+          Compress-Archive -Path "$releaseDirectory/*" -DestinationPath $archive
+          $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLower()
+          "$hash  MeuKM-Windows-x64.zip" | Set-Content "build/MeuKM-Windows-x64.zip.sha256" -NoNewline
       - uses: actions/upload-artifact@v4
         with:
           name: MeuKM-Windows
-          path: apps/meukm_flutter/build/MeuKM-Windows.zip
+          path: |
+            apps/meukm_flutter/build/MeuKM-Windows-x64.zip
+            apps/meukm_flutter/build/MeuKM-Windows-x64.zip.sha256
 
   release:
     if: github.ref == 'refs/heads/main'
@@ -63,18 +77,37 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
-      - name: Publicar beta para download
+      - name: Ler versão
+        id: version
+        run: |
+          version="$(awk '/^version:/ {print $2}' apps/meukm_flutter/pubspec.yaml)"
+          version_name="${version%%+*}"
+          version_code="${version##*+}"
+          echo "tag=v${version_name}+${version_code}" >> "$GITHUB_OUTPUT"
+          echo "name=${version_name}" >> "$GITHUB_OUTPUT"
+          echo "code=${version_code}" >> "$GITHUB_OUTPUT"
+      - name: Publicar release para atualização automática
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: >-
-          gh release create "beta-${{ github.run_number }}"
-          dist/MeuKM-Android.apk
-          dist/MeuKM-Windows.zip
-          --title "MeuKM Beta ${{ github.run_number }}"
-          --notes "Beta automático do MeuKM para Android e Windows. O Android é distribuído em APK e o Windows em ZIP x64."
-          --prerelease
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "A release $RELEASE_TAG já existe; mantendo a versão publicada."
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG" \
+            dist/MeuKM.apk \
+            dist/MeuKM.apk.sha256 \
+            dist/MeuKM-Windows-x64.zip \
+            dist/MeuKM-Windows-x64.zip.sha256 \
+            --title "MeuKM $VERSION_NAME" \
+            --notes "MeuKM $VERSION_NAME ($VERSION_CODE)\n\n• Nova área Configuração de conta, reunindo e-mail, sincronização e sair da conta.\n• Atualização automática no Android e Windows.\n• Downloads validados com SHA-256.\n• No Windows, o atualizador aguarda o app fechar, cria backup, substitui os arquivos e restaura a versão anterior se houver falha." \
+            --latest
