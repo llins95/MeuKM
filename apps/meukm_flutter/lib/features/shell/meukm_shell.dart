@@ -6,6 +6,7 @@ import '../../models/vehicle_record.dart';
 import '../../services/analytics_service.dart';
 import '../../services/app_controller.dart';
 import '../../services/report_exporter.dart';
+import '../settings/settings_dialogs.dart';
 
 class MeuKmShell extends StatefulWidget {
   const MeuKmShell({required this.controller, super.key});
@@ -359,19 +360,28 @@ class MorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PageFrame(title: 'Mais opções', subtitle: 'Organização', children: [
-    SettingsCard(icon: Icons.person_outline, title: controller.signedIn ? (controller.user?.email ?? 'Conta MeuKM') : 'Entrar ou cadastrar', subtitle: controller.signedIn ? controller.syncStatus : 'Use a mesma conta no celular e no computador', onTap: controller.signedIn ? controller.sync : onLogin),
+    SettingsCard(
+      icon: Icons.manage_accounts_outlined,
+      title: 'Configuração de conta',
+      subtitle: controller.signedIn ? (controller.user?.email ?? 'Conta MeuKM') : 'Entrar, cadastrar e sincronizar seus dados',
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (_) => AccountSettingsDialog(controller: controller, onLogin: onLogin),
+      ),
+    ),
     const SizedBox(height: 10),
-    SettingsCard(icon: Icons.cloud_sync, title: 'Sincronizar agora', subtitle: controller.syncStatus, onTap: controller.signedIn ? controller.sync : onLogin),
+    SettingsCard(
+      icon: Icons.system_update_alt,
+      title: 'Atualizar aplicativo',
+      subtitle: 'Verificar, baixar e instalar novas versões do MeuKM',
+      onTap: () => showDialog<void>(context: context, builder: (_) => const AppUpdateDialog()),
+    ),
     const SizedBox(height: 10),
-    if (controller.signedIn) ...[
-      SettingsCard(icon: Icons.logout, title: 'Sair da conta', subtitle: 'Os dados continuam salvos neste aparelho', onTap: controller.signOut),
-      const SizedBox(height: 10),
-    ],
     const SettingsCard(icon: Icons.backup, title: 'Backup dos dados', subtitle: 'A importação e exportação local chegam na próxima etapa nativa'),
     const SizedBox(height: 10),
     SettingsCard(icon: Icons.delete_outline, title: 'Apagar dados', subtitle: 'Exige confirmação e sincroniza a exclusão', color: Theme.of(context).colorScheme.error, onTap: onDeleteData),
     const SizedBox(height: 10),
-    SettingsCard(icon: Icons.info_outline, title: 'MeuKM nativo', subtitle: 'Beta Flutter para Android e Windows • versão 0.2.0', color: Theme.of(context).colorScheme.primary),
+    SettingsCard(icon: Icons.info_outline, title: 'MeuKM nativo', subtitle: 'Flutter para Android e Windows • versão 0.3.0', color: Theme.of(context).colorScheme.primary),
   ]);
 }
 
