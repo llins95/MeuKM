@@ -2,17 +2,20 @@ name: meukm
 description: "MeuKM para Android e Windows."
 publish_to: "none"
 
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ^3.12.2
 
 dependencies:
   cross_file: 0.3.5+5
+  crypto: ^3.0.6
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  package_info_plus: ^8.3.1
+  path_provider: ^2.1.5
   pdf: 3.13.0
   printing: 5.15.0
   share_plus: 13.3.0
@@ -28,3 +31,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon.png
+    - assets/windows/meukm_updater.ps1
