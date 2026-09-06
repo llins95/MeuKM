@@ -127,10 +127,9 @@ jobs:
           cat > release-notes.md <<EOF
           MeuKM $VERSION_NAME ($VERSION_CODE)
 
-          - Nova área Configuração de conta, reunindo e-mail, sincronização e sair da conta.
-          - Atualização automática no Android e Windows.
-          - Downloads validados com SHA-256.
-          - No Windows, o atualizador aguarda o app fechar, cria backup, substitui os arquivos e restaura a versão anterior se houver falha.
+          - Cálculo automático dos litros a partir do valor total e do preço por litro.
+          - Validação do odômetro corrigida com mensagens específicas para cada campo.
+          - Campo de odômetro limitado a números inteiros para evitar erros de formatação.
           EOF
           gh release create "$RELEASE_TAG" \
             dist/MeuKM.apk \

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/vehicle_record.dart';
 import '../../services/analytics_service.dart';
@@ -506,10 +507,16 @@ class _RecordDialogState extends State<RecordDialog> {
       VehicleRecordType.maintenance => 'Troca de óleo',
       VehicleRecordType.expense => 'Outra despesa',
     });
+    if (widget.type == VehicleRecordType.fuel) {
+      _price.addListener(_updateLiters);
+      _total.addListener(_updateLiters);
+    }
   }
 
   @override
   void dispose() {
+    _price.removeListener(_updateLiters);
+    _total.removeListener(_updateLiters);
     _odometer.dispose();
     _total.dispose();
     _liters.dispose();
@@ -521,12 +528,33 @@ class _RecordDialogState extends State<RecordDialog> {
 
   double _value(TextEditingController controller) => double.tryParse(controller.text.replaceAll(',', '.')) ?? 0;
 
+  void _updateLiters() {
+    final price = _value(_price);
+    final total = _value(_total);
+    final calculated = price > 0 && total > 0 ? total / price : 0;
+    final text = calculated > 0 ? calculated.toStringAsFixed(3).replaceAll('.', ',') : '';
+    if (_liters.text == text) return;
+    _liters.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    if (_message.isNotEmpty && mounted) setState(() => _message = '');
+  }
+
   void _save() {
     final total = _value(_total);
     final odometer = _value(_odometer);
     final liters = _value(_liters);
-    if (odometer <= 0 || total < 0 || (widget.type == VehicleRecordType.fuel && liters <= 0)) {
-      setState(() => _message = 'Informe o odômetro e os valores obrigatórios.');
+    if (odometer <= 0) {
+      setState(() => _message = 'Informe um valor válido para o odômetro.');
+      return;
+    }
+    if (widget.type == VehicleRecordType.fuel && (_value(_price) <= 0 || total <= 0 || liters <= 0)) {
+      setState(() => _message = 'Informe o preço por litro e o valor total.');
+      return;
+    }
+    if (total < 0) {
+      setState(() => _message = 'Informe um valor total válido.');
       return;
     }
     final now = DateTime.now().toUtc();
@@ -567,12 +595,26 @@ class _RecordDialogState extends State<RecordDialog> {
               if (selected != null) setState(() => _date = selected);
             }, child: const Text('Alterar')),
           ]),
-          TextField(controller: _odometer, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Odômetro (km)', border: OutlineInputBorder())),
+          TextField(
+            controller: _odometer,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(labelText: 'Odômetro (km)', border: OutlineInputBorder()),
+          ),
           const SizedBox(height: 12),
           if (widget.type == VehicleRecordType.fuel) ...[
             TextField(controller: _price, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Preço por litro', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(controller: _liters, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Litros', border: OutlineInputBorder())),
+            TextField(
+              controller: _liters,
+              readOnly: true,
+              decoration: const InputDecoration(
+                labelText: 'Litros',
+                helperText: 'Calculado automaticamente',
+                suffixText: 'L',
+                border: OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 12),
           ],
           TextField(controller: _total, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Valor total', border: OutlineInputBorder())),
