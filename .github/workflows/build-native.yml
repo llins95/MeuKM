@@ -31,16 +31,31 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - name: Restaurar assinatura Android quando configurada
+      - name: Validar assinatura Android obrigatória
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name não configurado. Builds Android de produção exigem assinatura persistente."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Todos os secrets de assinatura Android estão configurados."
+      - name: Restaurar assinatura Android persistente
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/meukm-release.jks
-            echo "Assinatura persistente do Android restaurada."
-          else
-            echo "::warning::ANDROID_KEYSTORE_BASE64 não configurado; esta validação usará a chave de debug. Configure os quatro secrets de assinatura antes de depender de atualizações Android entre releases."
-          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/meukm-release.jks
+          test -s android/app/meukm-release.jks
+          echo "Assinatura persistente do Android restaurada."
       - name: Compilar APK
         env:
           ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/apps/meukm_flutter/android/app/meukm-release.jks
@@ -48,6 +63,12 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: flutter build apk --release
+      - name: Verificar assinatura do APK
+        run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
       - name: Preparar APK e checksum
         run: |
           mkdir -p build/release
@@ -127,9 +148,10 @@ jobs:
           cat > release-notes.md <<EOF
           MeuKM $VERSION_NAME ($VERSION_CODE)
 
-          - Cálculo automático dos litros a partir do valor total e do preço por litro.
-          - Validação do odômetro corrigida com mensagens específicas para cada campo.
-          - Campo de odômetro limitado a números inteiros para evitar erros de formatação.
+          - Primeira versão Android assinada com a chave permanente do MeuKM.
+          - O pipeline agora bloqueia publicações Android sem assinatura persistente.
+          - O APK passa por verificação de assinatura antes de ser publicado.
+          - Mantém as correções de cálculo automático dos litros e validação do odômetro.
           EOF
           gh release create "$RELEASE_TAG" \
             dist/MeuKM.apk \
